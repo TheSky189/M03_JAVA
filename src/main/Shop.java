@@ -30,6 +30,14 @@ public class Shop {
 	//private Sale[] sales; modificado
 	private ArrayList<Sale> sales;
 	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	final static double TAX_RATE = 1.04;
 
