@@ -1,34 +1,36 @@
 package model;
 
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
+//import java.text.SimpleDateFormat;
+//import java.util.Arrays;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class Sale {
-	private String client;
-	private Product[] products;
+	private Client client; // nuevo modificado
+	private ArrayList<Product> products;
 	private Amount amount;
     private LocalDateTime dateTime; // Nuevo campo para la fecha y hora de la venta
 	
-	public Sale(String client, Product[] products, Amount amount) {
-		super();
+	public Sale(Client client, ArrayList<Product> products, Amount amount, LocalDateTime dateTime) {
+		//super();
 		this.client = client;
 		this.products = products;
 		this.amount = amount;
-        this.dateTime = LocalDateTime.now(); // Obtiene la fecha y hora actual
+        this.dateTime = dateTime; // Obtiene la fecha y hora actual
 	}
 	
-	public String getClient() {
+	
+	public Client getClient() {
 		return client;
 	}
-	public void setClient(String client) {
+	public void setClient(Client client) {
 		this.client = client;
 	}
-	public Product[] getProducts() {
+	public ArrayList<Product> getProducts() {
 		return products;
 	}
-	public void setProducts(Product[] products) {
+	public void setProducts(ArrayList<Product> products) {
 		this.products = products;
 	}
 	public Amount getAmount() {
@@ -54,13 +56,14 @@ public class Sale {
         this.dateTime = dateTime;
     }
 	
-	@Override
-	public String toString() {
-		return "Sale [client=" + client + ", products=" + Arrays.toString(products) + ", amount=" + amount + "]";
-	}
-
-	
-	
-	
+    @Override
+    public String toString() {
+        return "Sale{" +
+                "client='" + client + '\'' +
+                ", products=" + products +
+                ", amount=" + amount +
+                ", dateTime=" + dateTime +
+                '}';
+    }
 
 }

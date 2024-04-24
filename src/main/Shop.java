@@ -1,6 +1,8 @@
 package main;
 
 import model.Amount;
+import model.Client;
+import model.Employee;
 import model.Product;
 import model.Sale;
 
@@ -24,7 +26,7 @@ public class Shop {
 	private Amount cash = new Amount(100.00);
 	//private Product[] inventory; modifado 
     private ArrayList<Product> inventory;
-	private int numberProducts;
+	//private int numberProducts;
 	//private Sale[] sales; modificado
 	private ArrayList<Sale> sales;
 	
@@ -43,7 +45,31 @@ public class Shop {
 		Scanner scanner = new Scanner(System.in);
 		Shop shop = new Shop();
 		shop.loadInventory();
+		
+		// Iniciar sesion
+		if (shop.initSession(scanner)){
+			//si la sesion se inicia correctamente, muestra el menu principal
+			shop.showMainMenu(scanner);
+		}else {
+			System.out.println("Error: Datos de inicio de sesion incorrecto.");
+			}
 
+		}
+		
+		// Metodo para iniciar sesion
+	public boolean initSession(Scanner scanner) {
+		System.out.print("Numero de empleado: ");
+		int employeeId = scanner.nextInt();
+		System.out.println("Contraseña: ");
+		String password = scanner.next();
+		
+		Employee employee = new Employee("test", employeeId); // nombre de empleado fijo "test" temporal
+		return employee.login(employeeId, password);
+		
+	    }
+		
+		//metodo para mostrar el menu principal
+	public void showMainMenu(Scanner scanner) {
 		int opcion;
 		boolean exit = false;
 
@@ -67,39 +93,39 @@ public class Shop {
 
 			switch (opcion) {
 			case 1:
-				shop.showCash();
+				showCash();
 				break;
 
 			case 2:
-				shop.addProduct();
+				addProduct();
 				break;
 
 			case 3:
-				shop.addStock();
+				addStock();
 				break;
 
 			case 4:
-				shop.setExpired();
+				setExpired();
 				break;
 
 			case 5:
-				shop.showInventory();
+				showInventory();
 				break;
 
 			case 6:
-				shop.sale();
+				sale();
 				break;
 
 			case 7:
-				shop.showSales();
+				showSales();
 				break;
 
 			case 8:
-				shop.showTotalSales();
+				showTotalSales();
 				break;
 				
 			case 9:
-				shop.removeProduct();
+				removeProduct();
 				break;
 				
 			case 10:
@@ -115,6 +141,12 @@ public class Shop {
 		} while (!exit);
 
 	}
+		
+		
+    	
+
+
+	
 
 	/**
 	 * load initial inventory to shop
@@ -142,11 +174,11 @@ public class Shop {
 	 * add a new product to inventory getting data from console
 	 */
 	public void addProduct() {
+		Scanner scanner = new Scanner(System.in);
 		//if (isInventoryFull()) {
 		//	System.out.println("No se pueden añadir más productos");
 		//	return;
 		//}
-		Scanner scanner = new Scanner(System.in);
 		System.out.print("Nombre: ");
 		String name = scanner.nextLine();
 		System.out.print("Precio mayorista: ");
@@ -165,7 +197,7 @@ public class Shop {
 	 * add stock for a specific product
 	 */
 	public void addStock() {
-	    Scanner scanner = new Scanner(System.in);
+		Scanner scanner = new Scanner(System.in);
 	    System.out.print("Seleccione un nombre de producto: ");
 	    String name = scanner.next();
 	    Product product = findProduct(name);
@@ -188,7 +220,7 @@ public class Shop {
 	 * set a product as expired
 	 */
 	public void setExpired() {
-	    Scanner scanner = new Scanner(System.in);
+		Scanner scanner = new Scanner(System.in);
 	    System.out.print("Seleccione un nombre de producto: ");
 	    String name = scanner.next();
 	    Product product = findProduct(name);
@@ -221,12 +253,16 @@ public class Shop {
 	
 	
 	public void sale() {
-		// ask for client name
 		Scanner scanner = new Scanner(System.in);
+		// ask for client name
 		System.out.println("Realizar venta, escribir nombre cliente");
-		String client = scanner.nextLine();
+		String clientName = scanner.nextLine();
+		//String client = scanner.nextLine();
 
-		// sale product until input name is not 0
+		//Crear objeto Cliente con el nombre introducido
+	    Client client = new Client(clientName, Client.MEMBER_ID, Client.getInitialBalance());
+
+		// Vender productos 
 		double totalAmount = 0.0;
 		String name = "";
 		while (!name.equals("0")) {
@@ -257,22 +293,35 @@ public class Shop {
 		}
 
 		// show cost total
-		totalAmount = totalAmount * TAX_RATE;
-		Amount totalAmountWithTax = new Amount(totalAmount);
-		cash = new Amount(cash.getValue() + totalAmountWithTax.getValue());
-		System.out.println("Venta realizada con éxito, total: " + totalAmountWithTax);
+        totalAmount = totalAmount * TAX_RATE;
+        Amount totalAmountWithTax = new Amount(totalAmount);
+        // Verificar si el cliente tiene saldo suficiente para realizar la compra
+        if (client.getBalance().getValue() >= totalAmountWithTax.getValue()) {
+            // Si el cliente tiene saldo suficiente, realizar el pago y actualizar el saldo de la tienda
+            if (client.pay(totalAmountWithTax)) {
+                cash = new Amount(cash.getValue() + totalAmountWithTax.getValue());
+                System.out.println("Venta realizada con éxito, total: " + totalAmountWithTax);
+                //Saldo cliente despues de la compra
+        		double amountSaldo = client.getBalance().getValue() - totalAmountWithTax.getValue();
+                System.out.println("El saldo de la cuenta cliente: " + amountSaldo + "€");
+            	}
+        	} else {
+        		// Si el cliente no tiene saldo suficiente, mostrar mensaje con la cantidad adeudada
+        		double amountDue = client.getBalance().getValue() - totalAmountWithTax.getValue();
+        		System.out.println("El cliente debe: " + amountDue + "€");
+        	}
+        
 		
 	    // Crear una nueva venta
-	    Product[] productsSold = new Product[numberProducts];
-	    int index = 0;
-	    for (Product product : inventory) {
-	        if (product != null && !product.isAvailable()) {
-	            productsSold[index++] = product;
-	        }
-	    }
-	    Sale sale = new Sale(client, productsSold, totalAmountWithTax);
+        ArrayList<Product> productsSold = new ArrayList<>();
+        for (Product product : inventory) {
+            if (product != null && !product.isAvailable()) {
+                productsSold.add(product);
+            }
+        }
+        Sale sale = new Sale(client, productsSold, totalAmountWithTax, LocalDateTime.now());
 
-	    // Agregar la fecha y hora de la venta
+	    // Agregar la fecha y hora dev la venta
 	    sale.setDateTime(LocalDateTime.now()); // Agregar la fecha y hora actual
 
 	    // Agregar la venta al registro de ventas
@@ -284,15 +333,16 @@ public class Shop {
 	 * show all sales
 	 */
 	private void showSales() {
+		Scanner scanner = new Scanner(System.in);
 	    System.out.println("Lista de venta:");
 	    for (Sale sale : sales) {
 	        if (sale != null) {
-	            String clientUpperCase = sale.getClient().toUpperCase();
+	            String clientName = sale.getClient().getName(); // Obtener el nombre del cliente
+	            String clientUpperCase = clientName.toUpperCase(); // Convertir el nombre del cliente a mayúsculas
 	            System.out.println("Cliente: " + clientUpperCase  + " - Precio: " + sale.getAmount() + " - Fecha y hora: " + sale.getFormattedDateTime());
 	        }
 	    }
 	    // Preguntar al usuario si desea exportar las ventas a un archivo
-	    Scanner scanner = new Scanner(System.in);
 	    System.out.print("¿Desea exportar todas las ventas a un archivo? (Si/No): ");
 	    String answer = scanner.nextLine().trim(); // Eliminar espacios en blanco alrededor de la entrada
 	    System.out.println("Respuesta del usuario: " + answer); // Debugging
@@ -414,7 +464,7 @@ public class Shop {
     
     // Método para eliminar un producto del inventario
     public void removeProduct() {
-        Scanner scanner = new Scanner(System.in);
+		Scanner scanner = new Scanner(System.in);
         System.out.print("Seleccione el nombre del producto a eliminar: ");
         String name = scanner.next();
         Product productToRemove = findProduct(name);
