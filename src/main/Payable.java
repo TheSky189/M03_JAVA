@@ -7,16 +7,3 @@ public interface Payable {
 	boolean pay (Amount amount);
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
